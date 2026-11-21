@@ -3,6 +3,7 @@
     <string name="app_tagline">Liquid Glass Productivity</string>
 
     <!-- Auth & Sync -->
+    <string name="default_web_client_id" translatable="false">YOUR_DEFAULT_WEB_CLIENT_ID</string>
     <string name="welcome_note">Welcome to Any Task — Organize your day with clarity and color-coded focus.</string>
     <string name="continue_with_google">Continue with Google</string>
     <string name="sign_in_with_google">Sign in with Google</string>

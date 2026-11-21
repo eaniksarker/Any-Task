@@ -35,7 +35,12 @@ class TaskBoardUiTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         if (FirebaseApp.getApps(context).isEmpty()) {
-            FirebaseApp.initializeApp(context)
+            val options = com.google.firebase.FirebaseOptions.Builder()
+                .setApplicationId("com.aistudio.anytask.qvnzkr")
+                .setApiKey("fake-api-key")
+                .setProjectId("ai-studio-android-anytask")
+                .build()
+            FirebaseApp.initializeApp(context, options)
         }
     }
 
