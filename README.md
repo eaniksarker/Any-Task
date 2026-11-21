@@ -1,6 +1,6 @@
 # Any Task
 
-**Any Task** is a modern Android productivity application built with **Kotlin**, **Jetpack Compose**, Material Design 3, and a **Liquid Glass** design system. It replicates the clean workflow of Google Tasks while adding priority color-coding, translucent home-screen widgets, exact deadline push notifications with tray actions, and Google account cloud sync.
+**Any Task** transforms task management into a beautiful experience. Built with Kotlin and Jetpack Compose, the app combines a sleek Liquid Glass interface with powerful productivity tools, including priority-based task organization, customizable glass widgets, deadline notifications, and effortless Google sync to keep your tasks available everywhere.
 
 ---
 
