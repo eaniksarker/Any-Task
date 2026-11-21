@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidPriority(priority) {
+      return priority in ['HIGH', 'MEDIUM', 'LOW'];
+    }
+
+    function isValidTaskList(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.name is string &&
+             data.name.size() >= 1 &&
+             data.name.size() <= 80 &&
+             (!('colorHex' in data) || (data.colorHex is string && data.colorHex.size() >= 4 && data.colorHex.size() <= 16)) &&
+             data.sortOrder is int &&
+             data.sortOrder >= 0 &&
+             data.sortOrder <= 100000 &&
+             data.defaultList is bool &&
+             data.deleted is bool &&
+             data.updatedAtMillis is int &&
+             data.updatedAtMillis >= 0;
+    }
+
+    function isValidTask(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             isValidId(data.listId) &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 300 &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 4000)) &&
+             data.priority is string &&
+             isValidPriority(data.priority) &&
+             data.completed is bool &&
+             (!('completedAtMillis' in data) || (data.completedAtMillis is int && data.completedAtMillis >= 0)) &&
+             (!('dueDateMillis' in data) || (data.dueDateMillis is int && data.dueDateMillis >= 0)) &&
+             data.hasDueTime is bool &&
+             data.reminderOffsetMinutes is int &&
+             data.reminderOffsetMinutes >= -1 &&
+             data.reminderOffsetMinutes <= 10080 &&
+             data.sortOrder is int &&
+             data.sortOrder >= 0 &&
+             data.sortOrder <= 1000000 &&
+             (!('subtasks' in data) || (data.subtasks is list && data.subtasks.size() <= 50 && (data.subtasks.size() == 0 || data.subtasks[0] is map))) &&
+             data.deleted is bool &&
+             data.updatedAtMillis is int &&
+             data.updatedAtMillis >= 0;
+    }
+
+    match /users/{userId}/taskLists/{listId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(listId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(listId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'name', 'sortOrder', 'defaultList', 'deleted',
+                         'updatedAtMillis', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'name', 'colorHex', 'sortOrder', 'defaultList', 'deleted',
+                         'updatedAtMillis', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTaskList(incoming(), userId) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(listId) &&
+                       isValidTaskList(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'name', 'colorHex', 'sortOrder', 'defaultList', 'deleted',
+                           'updatedAtMillis', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(listId);
+    }
+
+    match /users/{userId}/tasks/{taskId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(taskId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(taskId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'listId', 'title', 'priority', 'completed',
+                         'hasDueTime', 'reminderOffsetMinutes', 'sortOrder',
+                         'deleted', 'updatedAtMillis', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'listId', 'title', 'notes', 'priority', 'completed',
+                         'completedAtMillis', 'dueDateMillis', 'hasDueTime',
+                         'reminderOffsetMinutes', 'sortOrder', 'subtasks',
+                         'deleted', 'updatedAtMillis', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTask(incoming(), userId) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(taskId) &&
+                       isValidTask(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       (
+                         // Action 1: Toggle completion status
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'completed', 'completedAtMillis', 'updatedAtMillis', 'updatedAt'
+                         ]) ||
+                         // Action 2: Reorder task position
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'sortOrder', 'updatedAtMillis', 'updatedAt'
+                         ]) ||
+                         // Action 3: Full task content edit / soft delete / sync merge
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'listId', 'title', 'notes', 'priority', 'completed',
+                           'completedAtMillis', 'dueDateMillis', 'hasDueTime',
+                           'reminderOffsetMinutes', 'sortOrder', 'subtasks',
+                           'deleted', 'updatedAtMillis', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(taskId);
+    }
+  }
+}

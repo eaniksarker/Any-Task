@@ -1,0 +1,8 @@
+.git
+.gradle
+app/build
+build
+.env
+local.properties
+debug.keystore
+*-debug.log

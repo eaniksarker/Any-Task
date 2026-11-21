@@ -1,0 +1,57 @@
+<resources>
+    <string name="app_name">Any Task</string>
+    <string name="app_tagline">Liquid Glass Productivity</string>
+
+    <!-- Auth & Sync -->
+    <string name="welcome_note">Welcome to Any Task — Organize your day with clarity and color-coded focus.</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="continue_offline">Continue Offline (Local Storage)</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="account_sync_title">Google Account &amp; Sync</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="last_synced_never">Not synced yet</string>
+    <string name="sync_status_synced">Synced</string>
+    <string name="sync_status_syncing">Syncing…</string>
+    <string name="sync_status_offline">Offline Mode</string>
+    <string name="sync_status_error">Sync Attention Needed</string>
+
+    <!-- Tasks & Lists -->
+    <string name="search_tasks_hint">Search tasks or notes…</string>
+    <string name="add_task_fab">Add task</string>
+    <string name="new_task_title">New Task</string>
+    <string name="edit_task_title">Edit Task</string>
+    <string name="task_title_label">Task title</string>
+    <string name="task_notes_label">Details &amp; notes</string>
+    <string name="subtasks_header">Subtasks</string>
+    <string name="add_subtask_hint">Add a subtask…</string>
+    <string name="completed_section_title">Completed</string>
+    <string name="empty_tasks_title">All clear</string>
+    <string name="empty_tasks_subtitle">Tap + to capture your next priority with Liquid Glass clarity.</string>
+    <string name="new_list_title">New Task List</string>
+    <string name="rename_list_title">Rename List</string>
+    <string name="delete_list_title">Delete List</string>
+    <string name="all_lists_label">All Lists</string>
+
+    <!-- Priority -->
+    <string name="priority_high">High</string>
+    <string name="priority_medium">Medium</string>
+    <string name="priority_low">Low</string>
+    <string name="priority_all">All Priorities</string>
+
+    <!-- Reminders & Permissions -->
+    <string name="notification_channel_id">anytask_deadlines</string>
+    <string name="notification_channel_name">Task Deadlines</string>
+    <string name="notification_channel_desc">Exact deadline and early reminder notifications for your tasks.</string>
+    <string name="notification_permission_rationale">Enable notifications so AnyTask can alert you at exact task deadlines and support tray actions.</string>
+    <string name="exact_alarm_rationale">Allow exact alarms in system settings so deadline alerts fire at the exact minute you choose.</string>
+    <string name="action_mark_complete">Mark Complete</string>
+    <string name="action_snooze_15m">Snooze 15m</string>
+    <string name="action_snooze_1h">Snooze 1h</string>
+
+    <!-- Widget -->
+    <string name="widget_name">AnyTask Glass</string>
+    <string name="widget_description">Translucent Liquid Glass task list with priority indicators and quick completion.</string>
+    <string name="widget_configure_title">Customize AnyTask Widget</string>
+    <string name="widget_empty_text">No upcoming tasks. Tap + to add one.</string>
+</resources>

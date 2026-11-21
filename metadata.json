@@ -1,0 +1,6 @@
+{
+  "name": "Any Task",
+  "description": "Liquid Glass task manager with priority color-coding, home-screen widgets, deadline notifications, and multi-provider cloud sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

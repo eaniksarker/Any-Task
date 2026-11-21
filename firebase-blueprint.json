@@ -1,0 +1,157 @@
+{
+  "entities": {
+    "TaskList": {
+      "title": "TaskList",
+      "description": "A user-owned project or task list container.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID matching request.auth.uid."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the task list (1-80 chars)."
+        },
+        "colorHex": {
+          "type": "string",
+          "description": "Accent color hex string for list badge."
+        },
+        "sortOrder": {
+          "type": "integer",
+          "description": "Zero-based display order."
+        },
+        "defaultList": {
+          "type": "boolean",
+          "description": "Whether this is the default inbox list."
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete tombstone flag for multi-device sync."
+        },
+        "updatedAtMillis": {
+          "type": "integer",
+          "description": "Client last-write-wins epoch millisecond timestamp."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp written via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp written via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "name",
+        "sortOrder",
+        "defaultList",
+        "deleted",
+        "updatedAtMillis",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TaskItem": {
+      "title": "TaskItem",
+      "description": "A user-owned task with priority, deadline, reminders, and embedded subtasks.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID matching request.auth.uid."
+        },
+        "listId": {
+          "type": "string",
+          "description": "Parent TaskList document ID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Task title (1-300 chars)."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional task notes/description (0-4000 chars)."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["HIGH", "MEDIUM", "LOW"],
+          "description": "Priority level controlling Liquid Glass color indicator."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Completion state of the task."
+        },
+        "completedAtMillis": {
+          "type": "integer",
+          "description": "Optional epoch millis when completed."
+        },
+        "dueDateMillis": {
+          "type": "integer",
+          "description": "Optional epoch millis of due date/time."
+        },
+        "hasDueTime": {
+          "type": "boolean",
+          "description": "Whether dueDateMillis includes a specific time of day."
+        },
+        "reminderOffsetMinutes": {
+          "type": "integer",
+          "description": "Early reminder offset in minutes (-1 for disabled)."
+        },
+        "sortOrder": {
+          "type": "integer",
+          "description": "Zero-based manual drag-and-drop sort position."
+        },
+        "subtasks": {
+          "type": "array",
+          "description": "Bounded list (max 50) of subtask maps."
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Soft-delete tombstone flag for multi-device sync."
+        },
+        "updatedAtMillis": {
+          "type": "integer",
+          "description": "Client last-write-wins epoch millisecond timestamp."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp written via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp written via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "listId",
+        "title",
+        "priority",
+        "completed",
+        "hasDueTime",
+        "reminderOffsetMinutes",
+        "sortOrder",
+        "deleted",
+        "updatedAtMillis",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/taskLists/{listId}": {
+      "schema": { "$ref": "#/entities/TaskList" },
+      "description": "Task lists owned by a specific authenticated user."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/TaskItem" },
+      "description": "Tasks and nested subtasks owned by a specific authenticated user."
+    }
+  }
+}
