@@ -9,13 +9,21 @@
     <string name="sign_in_with_google">Sign in with Google</string>
     <string name="continue_offline">Continue Offline (Local Storage)</string>
     <string name="sign_out">Sign Out</string>
-    <string name="account_sync_title">Google Account &amp; Sync</string>
+    <string name="account_sync_title">Settings</string>
+    <string name="settings_title">Settings</string>
     <string name="sync_now">Sync Now</string>
     <string name="last_synced_never">Not synced yet</string>
     <string name="sync_status_synced">Synced</string>
     <string name="sync_status_syncing">Syncing…</string>
     <string name="sync_status_offline">Offline Mode</string>
     <string name="sync_status_error">Sync Attention Needed</string>
+
+    <!-- Settings & About -->
+    <string name="sound_feedback_title">Sound &amp; Feedback</string>
+    <string name="completion_beep_title">Completion Beep Sound</string>
+    <string name="completion_beep_subtitle">Play a crisp beep when marking tasks done (respects silent &amp; DND)</string>
+    <string name="about_section_title">About</string>
+    <string name="developer_credit">Built and developed by Anik Sarker</string>
 
     <!-- Tasks & Lists -->
     <string name="search_tasks_hint">Search tasks or notes…</string>
@@ -27,6 +35,10 @@
     <string name="subtasks_header">Subtasks</string>
     <string name="add_subtask_hint">Add a subtask…</string>
     <string name="completed_section_title">Completed</string>
+    <string name="delete_all_completed">Delete all completed</string>
+    <string name="delete_all_completed_short">Delete all</string>
+    <string name="delete_all_completed_confirm_title">Delete all completed tasks?</string>
+    <string name="delete_all_completed_confirm_message">This will permanently delete %1$d completed task(s) from this view. This action cannot be undone.</string>
     <string name="empty_tasks_title">All clear</string>
     <string name="empty_tasks_subtitle">Tap + to capture your next priority with Liquid Glass clarity.</string>
     <string name="new_list_title">New Task List</string>
@@ -35,6 +47,7 @@
     <string name="all_lists_label">All Lists</string>
 
     <!-- Priority -->
+    <string name="priority_all_task">All Task</string>
     <string name="priority_high">High</string>
     <string name="priority_medium">Medium</string>
     <string name="priority_low">Low</string>
@@ -55,4 +68,5 @@
     <string name="widget_description">Translucent Liquid Glass task list with priority indicators and quick completion.</string>
     <string name="widget_configure_title">Customize AnyTask Widget</string>
     <string name="widget_empty_text">No upcoming tasks. Tap + to add one.</string>
+    <string name="widget_select_list_desc">Switch task list</string>
 </resources>

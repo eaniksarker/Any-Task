@@ -27,7 +27,8 @@ data class AccountSyncUiState(
     val syncState: SyncState = SyncState.Idle,
     val recentConflicts: List<SyncConflictSummary> = emptyList(),
     val statusMessage: String? = null,
-    val googlePhotoUrl: String? = null
+    val googlePhotoUrl: String? = null,
+    val completionSoundEnabled: Boolean = true
 )
 
 class AuthSyncViewModel(
@@ -43,6 +44,7 @@ class AuthSyncViewModel(
         val themeMode: AppThemeMode,
         val lastSynced: Long?,
         val autoSync: Boolean,
+        val completionSound: Boolean,
         val syncState: SyncState,
         val conflicts: List<SyncConflictSummary>,
         val statusMessage: String?
@@ -52,10 +54,12 @@ class AuthSyncViewModel(
         prefs.themeMode,
         prefs.lastSyncedMillis,
         prefs.autoSyncEnabled,
-        _syncState,
-        _recentConflicts
-    ) { theme, lastSynced, autoSync, syncState, conflicts ->
-        SyncMeta(theme, lastSynced, autoSync, syncState, conflicts, null)
+        prefs.completionSoundEnabled,
+        _syncState
+    ) { theme, lastSynced, autoSync, completionSound, syncState ->
+        SyncMeta(theme, lastSynced, autoSync, completionSound, syncState, emptyList(), null)
+    }.combine(_recentConflicts) { meta, conflicts ->
+        meta.copy(conflicts = conflicts)
     }.combine(_statusMessage) { meta, msg ->
         meta.copy(statusMessage = msg)
     }
@@ -86,7 +90,8 @@ class AuthSyncViewModel(
             syncState = meta.syncState,
             recentConflicts = meta.conflicts,
             statusMessage = meta.statusMessage,
-            googlePhotoUrl = googleUser?.photoUrl?.toString()
+            googlePhotoUrl = googleUser?.photoUrl?.toString(),
+            completionSoundEnabled = meta.completionSound
         )
     }.stateIn(
         scope = viewModelScope,
@@ -108,6 +113,12 @@ class AuthSyncViewModel(
     fun setAutoSyncEnabled(enabled: Boolean) {
         viewModelScope.launch {
             prefs.setAutoSyncEnabled(enabled)
+        }
+    }
+
+    fun setCompletionSoundEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            prefs.setCompletionSoundEnabled(enabled)
         }
     }
 

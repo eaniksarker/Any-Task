@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.util.TypedValue
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
-import com.example.MainActivity
 import com.example.R
 import com.example.data.local.AnyTaskDatabase
 import com.example.data.local.PreferencesManager
@@ -29,7 +28,7 @@ class AnyTaskWidgetService : RemoteViewsService() {
     }
 }
 
-private class AnyTaskWidgetFactory(
+internal class AnyTaskWidgetFactory(
     private val context: Context,
     private val appWidgetId: Int
 ) : RemoteViewsService.RemoteViewsFactory {
@@ -120,12 +119,14 @@ private class AnyTaskWidgetFactory(
         views.setTextColor(R.id.widget_item_priority_badge, badgeColor)
 
         val toggleFillIn = Intent().apply {
-            putExtra(MainActivity.EXTRA_COMPLETE_TASK_ID, task.id)
+            putExtra(AnyTaskWidgetProvider.EXTRA_ITEM_ACTION, AnyTaskWidgetProvider.ITEM_ACTION_COMPLETE)
+            putExtra(AnyTaskWidgetProvider.EXTRA_WIDGET_TASK_ID, task.id)
         }
         views.setOnClickFillInIntent(R.id.widget_item_check, toggleFillIn)
 
         val openFillIn = Intent().apply {
-            putExtra(MainActivity.EXTRA_OPEN_TASK_ID, task.id)
+            putExtra(AnyTaskWidgetProvider.EXTRA_ITEM_ACTION, AnyTaskWidgetProvider.ITEM_ACTION_OPEN)
+            putExtra(AnyTaskWidgetProvider.EXTRA_WIDGET_TASK_ID, task.id)
         }
         views.setOnClickFillInIntent(R.id.widget_item_text_container, openFillIn)
 

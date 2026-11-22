@@ -60,6 +60,9 @@ class TaskBoardViewModel(
     private val _pendingQuickAdd = MutableStateFlow(false)
     val pendingQuickAdd: StateFlow<Boolean> = _pendingQuickAdd.asStateFlow()
 
+    private val _statusMessage = MutableStateFlow<String?>(null)
+    val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
+
     private data class FilterInputs(
         val selectedListId: String?,
         val searchQuery: String,
@@ -167,7 +170,7 @@ class TaskBoardViewModel(
     }
 
     fun setPriorityFilter(priority: TaskPriority?) {
-        _priorityFilter.value = if (_priorityFilter.value == priority) null else priority
+        _priorityFilter.value = if (priority == null || _priorityFilter.value == priority) null else priority
     }
 
     fun setDueDateFilter(filter: DueDateFilter) {
@@ -242,6 +245,26 @@ class TaskBoardViewModel(
         viewModelScope.launch {
             repository.deleteTask(taskId)
         }
+    }
+
+    fun deleteAllCompletedTasks() {
+        val completedIds = uiState.value.completedTasks.map { it.id }
+        if (completedIds.isEmpty()) return
+        viewModelScope.launch {
+            val count = repository.deleteCompletedTasks(completedIds)
+            if (count > 0) {
+                _completedExpanded.value = false
+                _statusMessage.value = if (count == 1) {
+                    "Deleted 1 completed task"
+                } else {
+                    "Deleted $count completed tasks"
+                }
+            }
+        }
+    }
+
+    fun clearStatusMessage() {
+        _statusMessage.value = null
     }
 
     fun moveActiveTask(fromIndex: Int, toIndex: Int) {

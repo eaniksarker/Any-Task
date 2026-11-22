@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.domain.model.AppThemeMode
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.anyTaskDataStore: DataStore<Preferences> by preferencesDataStore(
@@ -24,6 +25,7 @@ class PreferencesManager(private val context: Context) {
         val LAST_SYNCED_MILLIS = longPreferencesKey("last_synced_millis")
         val AUTO_SYNC_ENABLED = booleanPreferencesKey("auto_sync_enabled")
         val OFFLINE_MODE_ACKNOWLEDGED = booleanPreferencesKey("offline_mode_acknowledged")
+        val COMPLETION_SOUND_ENABLED = booleanPreferencesKey("completion_sound_enabled")
     }
 
     val themeMode: Flow<AppThemeMode> = context.anyTaskDataStore.data.map { prefs ->
@@ -44,6 +46,10 @@ class PreferencesManager(private val context: Context) {
 
     val offlineModeAcknowledged: Flow<Boolean> = context.anyTaskDataStore.data.map { prefs ->
         prefs[Keys.OFFLINE_MODE_ACKNOWLEDGED] ?: false
+    }
+
+    val completionSoundEnabled: Flow<Boolean> = context.anyTaskDataStore.data.map { prefs ->
+        prefs[Keys.COMPLETION_SOUND_ENABLED] ?: true
     }
 
     suspend fun setThemeMode(mode: AppThemeMode) {
@@ -69,6 +75,12 @@ class PreferencesManager(private val context: Context) {
         context.anyTaskDataStore.edit { it[Keys.OFFLINE_MODE_ACKNOWLEDGED] = acknowledged }
     }
 
+    suspend fun setCompletionSoundEnabled(enabled: Boolean) {
+        context.anyTaskDataStore.edit { it[Keys.COMPLETION_SOUND_ENABLED] = enabled }
+    }
+
+    suspend fun isCompletionSoundEnabled(): Boolean = completionSoundEnabled.first()
+
     // Widget per-instance preferences stored via SharedPreferences for synchronous RemoteViews reads
     fun saveWidgetConfig(appWidgetId: Int, listId: String?, darkGlass: Boolean) {
         context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE).edit()
@@ -85,10 +97,21 @@ class PreferencesManager(private val context: Context) {
         context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
             .getBoolean("widget_dark_$appWidgetId", true)
 
+    fun setWidgetDropdownOpen(appWidgetId: Int, isOpen: Boolean) {
+        context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean("widget_dropdown_$appWidgetId", isOpen)
+            .apply()
+    }
+
+    fun isWidgetDropdownOpen(appWidgetId: Int): Boolean =
+        context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+            .getBoolean("widget_dropdown_$appWidgetId", false)
+
     fun deleteWidgetConfig(appWidgetId: Int) {
         context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE).edit()
             .remove("widget_list_$appWidgetId")
             .remove("widget_dark_$appWidgetId")
+            .remove("widget_dropdown_$appWidgetId")
             .apply()
     }
 

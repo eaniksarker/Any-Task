@@ -54,6 +54,9 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.example.widget.ACTION_TOGGLE_TASK" />
+                <action android:name="com.example.widget.ACTION_WIDGET_ITEM_CLICK" />
+                <action android:name="com.example.widget.ACTION_TOGGLE_LIST_MENU" />
+                <action android:name="com.example.widget.ACTION_SELECT_LIST" />
                 <action android:name="com.example.widget.ACTION_REFRESH" />
             </intent-filter>
             <meta-data
@@ -64,6 +67,12 @@
         <!-- RemoteViews Service for Widget Task List -->
         <service
             android:name=".widget.AnyTaskWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <!-- RemoteViews Service for Widget List Selector Dropdown -->
+        <service
+            android:name=".widget.AnyTaskWidgetListService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
 

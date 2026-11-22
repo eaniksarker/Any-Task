@@ -1,6 +1,7 @@
 package com.example.data
 
 import android.content.Context
+import com.example.audio.CompletionSoundPlayer
 import com.example.data.local.AnyTaskDatabase
 import com.example.data.local.PreferencesManager
 import com.example.data.local.toDomain
@@ -151,6 +152,10 @@ class AnyTaskRepository(
         )
         if (newCompleted) {
             DeadlineAlarmScheduler.cancelTaskReminder(context, taskId)
+            if (!existing.completed) {
+                val soundEnabled = prefs.isCompletionSoundEnabled()
+                CompletionSoundPlayer.playTaskCompletedBeep(context, soundEnabled)
+            }
         } else {
             DeadlineAlarmScheduler.scheduleTaskReminder(context, updated)
         }
@@ -179,6 +184,24 @@ class AnyTaskRepository(
         val deleted = existing.copy(deleted = true, updatedAtMillis = now, dirty = true)
         pushTaskIfSignedIn(deleted)
         AnyTaskWidgetProvider.notifyWidgetDataChanged(context)
+    }
+
+    suspend fun deleteCompletedTasks(taskIds: List<String>): Int {
+        if (taskIds.isEmpty()) return 0
+        val existingTasks = taskIds.mapNotNull { id ->
+            db.taskDao().getTaskWithSubtasksById(id)?.toDomain()
+        }.filter { it.completed && !it.deleted }
+        if (existingTasks.isEmpty()) return 0
+
+        val idsToDelete = existingTasks.map { it.id }
+        val now = System.currentTimeMillis()
+        db.taskDao().markDeletedByIds(idsToDelete, now)
+        existingTasks.forEach { task ->
+            DeadlineAlarmScheduler.cancelTaskReminder(context, task.id)
+            pushTaskIfSignedIn(task.copy(deleted = true, updatedAtMillis = now, dirty = true))
+        }
+        AnyTaskWidgetProvider.notifyWidgetDataChanged(context)
+        return existingTasks.size
     }
 
     suspend fun reorderTasks(orderedActiveIds: List<String>) {

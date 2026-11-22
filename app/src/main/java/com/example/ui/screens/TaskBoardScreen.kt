@@ -45,24 +45,32 @@ import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.ManageAccounts
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -118,7 +126,9 @@ fun TaskBoardScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val pendingOpenTaskId by viewModel.pendingOpenTaskId.collectAsStateWithLifecycle()
     val pendingQuickAdd by viewModel.pendingQuickAdd.collectAsStateWithLifecycle()
+    val statusMessage by viewModel.statusMessage.collectAsStateWithLifecycle()
     val palette = LocalLiquidGlassPalette.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var showSearch by remember { mutableStateOf(false) }
     var editorTask by remember { mutableStateOf<TaskItem?>(null) }
@@ -126,6 +136,14 @@ fun TaskBoardScreen(
     var showCreateListDialog by remember { mutableStateOf(false) }
     var listToRename by remember { mutableStateOf<TaskList?>(null) }
     var listToDelete by remember { mutableStateOf<TaskList?>(null) }
+    var showDeleteCompletedDialog by remember { mutableStateOf(false) }
+    var showOverflowMenu by remember { mutableStateOf(false) }
+
+    LaunchedEffect(statusMessage) {
+        val msg = statusMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(msg)
+        viewModel.clearStatusMessage()
+    }
 
     // Handle deep links from widget or notifications
     LaunchedEffect(pendingOpenTaskId, state.activeTasks, state.completedTasks) {
@@ -151,6 +169,7 @@ fun TaskBoardScreen(
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onBackground,
             contentWindowInsets = WindowInsets.safeDrawing,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
@@ -303,10 +322,55 @@ fun TaskBoardScreen(
                                         modifier = Modifier.testTag("open_accounts_button")
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.ManageAccounts,
-                                            contentDescription = stringResource(R.string.account_sync_title),
+                                            imageVector = Icons.Rounded.Settings,
+                                            contentDescription = stringResource(R.string.settings_title),
                                             tint = MaterialTheme.colorScheme.onSurface
                                         )
+                                    }
+                                    Box {
+                                        IconButton(
+                                            onClick = { showOverflowMenu = true },
+                                            modifier = Modifier.testTag("board_overflow_menu_button")
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.MoreVert,
+                                                contentDescription = "More options",
+                                                tint = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                        DropdownMenu(
+                                            expanded = showOverflowMenu,
+                                            onDismissRequest = { showOverflowMenu = false }
+                                        ) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.delete_all_completed)) },
+                                                enabled = state.completedTasks.isNotEmpty(),
+                                                leadingIcon = {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.DeleteSweep,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                onClick = {
+                                                    showOverflowMenu = false
+                                                    showDeleteCompletedDialog = true
+                                                },
+                                                modifier = Modifier.testTag("menu_delete_all_completed")
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.settings_title)) },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Settings,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                onClick = {
+                                                    showOverflowMenu = false
+                                                    onOpenAccountSync()
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -389,12 +453,52 @@ fun TaskBoardScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            val allSelected = state.priorityFilter == null
+                            FilterChip(
+                                selected = allSelected,
+                                onClick = { viewModel.setPriorityFilter(null) },
+                                shape = CircleShape,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.DoneAll,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = stringResource(R.string.priority_all_task),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = palette.glassSurfaceBottom,
+                                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    selectedLeadingIconColor = MaterialTheme.colorScheme.primary
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = allSelected,
+                                    borderColor = palette.divider,
+                                    selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                                    borderWidth = 1.dp,
+                                    selectedBorderWidth = 1.2.dp
+                                ),
+                                modifier = Modifier.testTag("filter_priority_all")
+                            )
+
                             TaskPriority.entries.forEach { prio ->
                                 val selected = state.priorityFilter == prio
                                 val accent = prio.accentColor()
                                 FilterChip(
                                     selected = selected,
                                     onClick = { viewModel.setPriorityFilter(prio) },
+                                    shape = CircleShape,
                                     leadingIcon = {
                                         Box(
                                             modifier = Modifier
@@ -403,16 +507,60 @@ fun TaskBoardScreen(
                                                 .background(accent)
                                         )
                                     },
-                                    label = { Text(prio.label) },
+                                    label = {
+                                        Text(
+                                            text = prio.label,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = palette.glassSurfaceBottom,
+                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        selectedContainerColor = prio.glassTintColor(palette.isDark),
+                                        selectedLabelColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = selected,
+                                        borderColor = palette.divider,
+                                        selectedBorderColor = accent.copy(alpha = 0.8f),
+                                        borderWidth = 1.dp,
+                                        selectedBorderWidth = 1.2.dp
+                                    ),
                                     modifier = Modifier.testTag("filter_priority_${prio.name.lowercase()}")
                                 )
                             }
 
                             DueDateFilter.entries.forEach { filter ->
+                                val dueSelected = state.dueDateFilter == filter
                                 FilterChip(
-                                    selected = state.dueDateFilter == filter,
+                                    selected = dueSelected,
                                     onClick = { viewModel.setDueDateFilter(filter) },
-                                    label = { Text(filter.label) },
+                                    shape = CircleShape,
+                                    label = {
+                                        Text(
+                                            text = filter.label,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = palette.glassSurfaceBottom,
+                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = dueSelected,
+                                        borderColor = palette.divider,
+                                        selectedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
+                                        borderWidth = 1.dp,
+                                        selectedBorderWidth = 1.2.dp
+                                    ),
                                     modifier = Modifier.testTag("filter_due_${filter.name.lowercase()}")
                                 )
                             }
@@ -543,20 +691,46 @@ fun TaskBoardScreen(
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                                    .padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
                                                 horizontalArrangement = Arrangement.SpaceBetween,
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Text(
                                                     text = "${stringResource(R.string.completed_section_title)} (${state.completedTasks.size})",
                                                     style = MaterialTheme.typography.titleSmall,
-                                                    color = MaterialTheme.colorScheme.onSurface
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    modifier = Modifier.weight(1f)
                                                 )
-                                                Icon(
-                                                    imageVector = if (state.completedExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                                                    contentDescription = "Toggle completed tasks",
-                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    TextButton(
+                                                        onClick = { showDeleteCompletedDialog = true },
+                                                        modifier = Modifier.testTag("delete_all_completed_button")
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Rounded.DeleteSweep,
+                                                            contentDescription = stringResource(R.string.delete_all_completed),
+                                                            tint = MaterialTheme.colorScheme.error,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(
+                                                            text = stringResource(R.string.delete_all_completed_short),
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            color = MaterialTheme.colorScheme.error,
+                                                            maxLines = 1,
+                                                            softWrap = false
+                                                        )
+                                                    }
+                                                    Icon(
+                                                        imageVector = if (state.completedExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                                                        contentDescription = "Toggle completed tasks",
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.padding(end = 6.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -622,6 +796,38 @@ fun TaskBoardScreen(
                 )
             },
             onDelete = { taskId -> viewModel.deleteTask(taskId) }
+        )
+    }
+
+    if (showDeleteCompletedDialog && state.completedTasks.isNotEmpty()) {
+        val count = state.completedTasks.size
+        AlertDialog(
+            onDismissRequest = { showDeleteCompletedDialog = false },
+            title = { Text(stringResource(R.string.delete_all_completed_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_all_completed_confirm_message, count)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteAllCompletedTasks()
+                        showDeleteCompletedDialog = false
+                    },
+                    modifier = Modifier.testTag("confirm_delete_all_completed_button")
+                ) {
+                    Text(
+                        text = stringResource(R.string.delete_all_completed_short),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteCompletedDialog = false },
+                    modifier = Modifier.testTag("cancel_delete_all_completed_button")
+                ) {
+                    Text("Cancel")
+                }
+            },
+            modifier = Modifier.testTag("delete_all_completed_dialog")
         )
     }
 
